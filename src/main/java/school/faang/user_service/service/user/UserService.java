@@ -5,12 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.UserDto;
+import school.faang.user_service.entity.Country;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.UserProfilePic;
 import school.faang.user_service.exception.DataGettingException;
+import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.UserMapper;
+import school.faang.user_service.repository.CountryRepository;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.service.amazonS3.S3Service;
+import school.faang.user_service.service.user.image.AvatarGeneratorService;
 import school.faang.user_service.service.user.image.BufferedPicHolder;
 import school.faang.user_service.service.user.image.ImageProcessor;
 
@@ -20,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static school.faang.user_service.exception.ExceptionMessage.FILE_PROCESSING_EXCEPTION;
+import static school.faang.user_service.exception.ExceptionMessage.NO_SUCH_COUNTRY_EXCEPTION;
 import static school.faang.user_service.exception.ExceptionMessage.NO_SUCH_USER_EXCEPTION;
+import static school.faang.user_service.exception.ExceptionMessage.REPEATED_USER_CREATION_EXCEPTION;
 import static school.faang.user_service.exception.ExceptionMessage.USER_AVATAR_ABSENCE_EXCEPTION;
 
 @Slf4j
@@ -31,9 +37,29 @@ public class UserService {
     public static final String SMALL_PIC_NAME = "smallPic";
     public static final String FOLDER_PREFIX = "user";
     private S3Service s3Service;
+    private AvatarGeneratorService avatarGeneratorService;
     private ImageProcessor imageProcessor;
     private UserRepository userRepository;
     private UserMapper userMapper;
+    private CountryRepository countryRepository;
+
+    @Transactional
+    public UserDto createUser(UserDto userDto) {
+        Long userId = userDto.getId();
+        if (userId != null && userRepository.existsById(userId)) {
+            log.warn("Registered attempt to create user by id of existing user.");
+            throw new DataValidationException(REPEATED_USER_CREATION_EXCEPTION.getMessage());
+        }
+
+        User userToBeCreated = userMapper.toEntity(userDto);
+        fillUserEntity(userDto.getCountryId(), userToBeCreated);
+        User createdUser = userRepository.save(userToBeCreated);
+
+        log.info("User created successfully.");
+
+        BufferedImage avatar = avatarGeneratorService.getRandomAvatar();
+        return uploadUserPic(createdUser.getId(), avatar);
+    }
 
     @Transactional
     public UserDto uploadUserPic(Long userId, BufferedImage uploadedImage) {
@@ -113,5 +139,11 @@ public class UserService {
         String key = String.format("%s/%d%s", FOLDER_PREFIX + userId, System.currentTimeMillis(), fileName);
         s3Service.uploadFile(outputStream, key);
         return key;
+    }
+
+    private void fillUserEntity(Long countryId, User userToBeCreated) {
+        Country country = countryRepository.findById(countryId)
+                .orElseThrow(() -> new DataGettingException(NO_SUCH_COUNTRY_EXCEPTION.getMessage()));
+        userToBeCreated.setCountry(country);
     }
 }
