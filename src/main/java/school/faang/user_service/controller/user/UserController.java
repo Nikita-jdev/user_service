@@ -37,7 +37,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/avatar")
-    public UserDto uploadUserPic(@PathVariable Long userId, MultipartFile file) {
+    public UserDto uploadUserAvatar(@PathVariable Long userId, MultipartFile file) {
         if (file.getSize() > MAX_AVATAR_SIZE) {
             log.error(AVATAR_FILE_SIZE_EXCEPTION.getMessage() + "(userId = " + userId + ")");
             throw new DataValidationException(AVATAR_FILE_SIZE_EXCEPTION.getMessage());
@@ -47,7 +47,7 @@ public class UserController {
         return userService.uploadUserAvatar(userId, imageProcessor.getBufferedImage(file));
     }
 
-    @GetMapping("/{userId}/pic")
+    @GetMapping("/{userId}/avatar")
     public ResponseEntity<byte[]> downloadUserAvatar(@PathVariable Long userId) {
         log.info("Downloading avatar for user with id = " + userId);
 
@@ -56,7 +56,7 @@ public class UserController {
         return new ResponseEntity<>(userService.downloadUserAvatar(userId), headers, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{userId}/pic")
+    @DeleteMapping("/{userId}/avatar")
     public void deleteUserAvatar(@PathVariable Long userId) {
         log.info("Deleting avatar for user with id = " + userId);
 

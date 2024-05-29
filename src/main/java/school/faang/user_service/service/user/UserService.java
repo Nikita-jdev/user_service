@@ -15,7 +15,7 @@ import school.faang.user_service.repository.CountryRepository;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.service.amazonS3.S3Service;
 import school.faang.user_service.service.user.image.AvatarGeneratorService;
-import school.faang.user_service.service.user.image.BufferedPicHolder;
+import school.faang.user_service.service.user.image.BufferedImagesHolder;
 import school.faang.user_service.service.user.image.ImageProcessor;
 
 import java.awt.image.BufferedImage;
@@ -33,8 +33,8 @@ import static school.faang.user_service.exception.ExceptionMessage.USER_AVATAR_A
 @Service
 @AllArgsConstructor
 public class UserService {
-    public static final String BIG_AVATAR_PICTURE_NAME = "bigPic";
-    public static final String SMALL_AVATAR_PICTURE_NAME = "smallPic";
+    public static final String BIG_AVATAR_PICTURE_NAME = "bigPicture";
+    public static final String SMALL_AVATAR_PICTURE_NAME = "smallPicture";
     public static final String FOLDER_PREFIX = "user";
     private S3Service s3Service;
     private AvatarGeneratorService avatarGeneratorService;
@@ -65,11 +65,11 @@ public class UserService {
     public UserDto uploadUserAvatar(Long userId, BufferedImage uploadedImage) {
         User user = getUser(userId);
 
-        BufferedPicHolder scaledImages = imageProcessor.scaleImage(uploadedImage);
+        BufferedImagesHolder scaledImages = imageProcessor.scaleImage(uploadedImage);
         log.info("Received avatar image was successfully scaled.");
 
-        String fileId = uploadFile(userId, imageProcessor.getImageOS(scaledImages.getBigPic()), BIG_AVATAR_PICTURE_NAME);
-        String smallFileId = uploadFile(userId, imageProcessor.getImageOS(scaledImages.getSmallPic()), SMALL_AVATAR_PICTURE_NAME);
+        String fileId = uploadFile(userId, imageProcessor.getImageOS(scaledImages.getBigPicture()), BIG_AVATAR_PICTURE_NAME);
+        String smallFileId = uploadFile(userId, imageProcessor.getImageOS(scaledImages.getSmallPicture()), SMALL_AVATAR_PICTURE_NAME);
 
         log.info("Scaled images of user avatar were uploaded on cloud.");
 
@@ -91,14 +91,14 @@ public class UserService {
     @Transactional
     public byte[] downloadUserAvatar(Long userId) {
         User user = getUser(userId);
-        UserProfilePic userProfilePic = user.getUserProfilePic();
+        UserProfilePic userProfilePictures = user.getUserProfilePic();
 
-        if (userProfilePic == null) {
+        if (userProfilePictures == null) {
             log.warn("Can't download user's avatar, cause user doesn't have it.");
             throw new DataGettingException(USER_AVATAR_ABSENCE_EXCEPTION.getMessage());
         }
 
-        try (InputStream userAvatarIS = s3Service.downloadFile(userProfilePic.getSmallFileId())) {
+        try (InputStream userAvatarIS = s3Service.downloadFile(userProfilePictures.getSmallFileId())) {
             byte[] imageInBytesArray = userAvatarIS.readAllBytes();
 
             log.info("User's avatar image was downloaded successfully.");
