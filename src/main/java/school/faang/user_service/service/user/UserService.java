@@ -13,7 +13,7 @@ import school.faang.user_service.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Stream;
 
-@Service
+@Service("UserService1")
 @RequiredArgsConstructor
 public class UserService {
 
