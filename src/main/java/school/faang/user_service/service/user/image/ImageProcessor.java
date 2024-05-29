@@ -29,6 +29,7 @@ public class ImageProcessor {
             throw new RuntimeException(FILE_PROCESSING_EXCEPTION.getMessage() + e.getMessage());
         }
 
+        //Если загруженный файл не является картинкой, то в объект bufferedImage не запишется ничего
         if (bufferedImage == null) {
             log.error(PICTURE_TYPE_EXCEPTION.getMessage() + "Received file: " + pic.getOriginalFilename());
             throw new DataValidationException(PICTURE_TYPE_EXCEPTION.getMessage());

@@ -20,7 +20,7 @@ import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.service.user.UserService;
 import school.faang.user_service.service.user.image.ImageProcessor;
 
-import static school.faang.user_service.exception.ExceptionMessage.FILE_SIZE_EXCEPTION;
+import static school.faang.user_service.exception.ExceptionMessage.AVATAR_FILE_SIZE_EXCEPTION;
 
 @Slf4j
 @RestController
@@ -36,30 +36,30 @@ public class UserController {
         return userService.createUser(userDto);
     }
 
-    @PostMapping("/{userId}/pic")
+    @PostMapping("/{userId}/avatar")
     public UserDto uploadUserPic(@PathVariable Long userId, MultipartFile file) {
         if (file.getSize() > MAX_AVATAR_SIZE) {
-            log.error(FILE_SIZE_EXCEPTION.getMessage() + "(userId = " + userId + ")");
-            throw new DataValidationException(FILE_SIZE_EXCEPTION.getMessage());
+            log.error(AVATAR_FILE_SIZE_EXCEPTION.getMessage() + "(userId = " + userId + ")");
+            throw new DataValidationException(AVATAR_FILE_SIZE_EXCEPTION.getMessage());
         }
 
         log.info("Uploading avatar for user with id = " + userId);
-        return userService.uploadUserPic(userId, imageProcessor.getBufferedImage(file));
+        return userService.uploadUserAvatar(userId, imageProcessor.getBufferedImage(file));
     }
 
     @GetMapping("/{userId}/pic")
-    public ResponseEntity<byte[]> downloadUserPic(@PathVariable Long userId) {
+    public ResponseEntity<byte[]> downloadUserAvatar(@PathVariable Long userId) {
         log.info("Downloading avatar for user with id = " + userId);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_JPEG);
-        return new ResponseEntity<>(userService.downloadUserPic(userId), headers, HttpStatus.OK);
+        return new ResponseEntity<>(userService.downloadUserAvatar(userId), headers, HttpStatus.OK);
     }
 
     @DeleteMapping("/{userId}/pic")
-    public void deleteUserPic(@PathVariable Long userId) {
+    public void deleteUserAvatar(@PathVariable Long userId) {
         log.info("Deleting avatar for user with id = " + userId);
 
-        userService.deleteUserPic(userId);
+        userService.deleteUserAvatar(userId);
     }
 }

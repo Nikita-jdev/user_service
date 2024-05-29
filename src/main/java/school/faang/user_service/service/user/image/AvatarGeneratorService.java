@@ -3,6 +3,7 @@ package school.faang.user_service.service.user.image;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.converter.BufferedImageHttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -18,7 +19,8 @@ import static school.faang.user_service.exception.ExceptionMessage.RANDOM_AVATAR
 @Service
 @RequiredArgsConstructor
 public class AvatarGeneratorService {
-    public final static String BASE_URL = "https://api.dicebear.com/8.x/notionists/png?size=170&seed=";
+    @Value("${services.avatar-generator.baseUrl}")
+    private String baseUrl;
     private RestTemplate restTemplate;
 
     @PostConstruct
@@ -28,7 +30,7 @@ public class AvatarGeneratorService {
     }
 
     public BufferedImage getRandomAvatar() {
-        String url = BASE_URL + new Random().nextLong();
+        String url = baseUrl + new Random().nextLong();
 
         BufferedImage responseBody = restTemplate.getForObject(url, BufferedImage.class);
 
